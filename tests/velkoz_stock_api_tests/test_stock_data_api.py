@@ -3,6 +3,7 @@ import unittest
 import sqlite3
 import sqlalchemy
 import pandas as pd
+import numpy as np
 import os
 
 # Importing Data API methods for testing:
@@ -32,4 +33,22 @@ class StockDataAPITest(unittest.TestCase):
         # Performing a database call for price data for AAPL:
         aapl_price_data = test_api_instance.get_price_history('AAPL')
 
-        print(aapl_price_data)
+        print(aapl_price_data.head())
+
+        # Assertion testing the column names of the extracted dataframe:
+        aapl_price_data_column_names = sorted(aapl_price_data.columns)
+        test_column_names_lst = sorted(['open', 'high', 'low', 'close', 'volume', 'dividends', 'stock_splits'])
+
+        self.assertEqual(aapl_price_data_column_names, test_column_names_lst)
+
+        # Type testing the data from each column in the 'aapl_price_data':
+        self.assertIs(aapl_price_data.open.dtype, np.dtype('float64'))
+        self.assertIs(aapl_price_data.high.dtype, np.dtype('float64'))
+        self.assertIs(aapl_price_data.low.dtype, np.dtype('float64'))
+        self.assertIs(aapl_price_data.close.dtype, np.dtype('float64'))
+        self.assertIs(aapl_price_data.volume.dtype, np.dtype('int64'))
+        self.assertIs(aapl_price_data.dividends.dtype, np.dtype('float64'))
+        self.assertIs(aapl_price_data.stock_splits.dtype, np.dtype('float64'))
+
+        # Type Testing the Data in the price_history dataframe index:
+        self.assertIsInstance(aapl_price_data.index, pd.DatetimeIndex)
