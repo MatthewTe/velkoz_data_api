@@ -53,6 +53,6 @@ class StockDataAPI(object):
         price_df = pd.read_sql_table(
             table_name = price_history_tbl_name,
             con = self._sqlaengine,
-            index_col = "date")
+            index_col = "Date")
 
         return price_df

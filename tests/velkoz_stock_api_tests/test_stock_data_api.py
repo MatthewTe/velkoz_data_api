@@ -24,3 +24,12 @@ class StockDataAPITest(unittest.TestCase):
         """
         # Initalizing the Data API instance:
         test_api_instance = StockDataAPI()
+
+        # Asserting that the api has been initalized with database correctly:
+        self.assertEqual(test_api_instance._db_uri, os.environ["DATABASE_URI"])
+        self.assertEqual(type(test_api_instance._sqlaengine), sqlalchemy.engine.Engine)
+
+        # Performing a database call for price data for AAPL:
+        aapl_price_data = test_api_instance.get_price_history('AAPL')
+
+        print(aapl_price_data)
