@@ -1,5 +1,6 @@
 # Importing 3rd Party Packages:
 import pandas as pd
+import os
 from sqlalchemy import create_engine, MetaData, Column, String, DateTime, Integer, inspect
 from sqlalchemy.orm import sessionmaker, Session, scoped_session
 
@@ -8,25 +9,30 @@ class StockDataAPI(object):
     """
     # TODO: Add Documentation
     """
-    def __init__(self, database_uri, ticker):
+    def __init__(self):
+
+        # Declaring internal database parameters, database uri is extracted from
+        # environment variables:
+        try:
+            self._db_uri = os.environ["DATABASE_URI"]
+
+        except:
+            raise ValueError(f"Error With Database URI Environment Variable, Please Check {os.getenv('DATABASE_URI')}")
 
         # Creating a connection to the database:
         self._sqlaengine = create_engine(self._db_uri, pool_pre_ping=True, echo=True)
 
-        # Declaring internal database parameters:
-        self._db_uri = database_uri
-        self._ticker = ticker
-
-        # TODO: Add method that determines the status of a ticker and dynamically
-        # generates a list of avalible database schema (table names).
-
-        # Creating instance parameters representing stock database schema:
-        self._price_history_tbl = f'{self._ticker}_price_history'
-
-    def get_price_history(self):
+    def get_price_history(self, ticker):
         """
         The method that makes use of the pandas.read_sql_table() to extract the
-        {ticker}_price_history database table as a pandas Dataframe
+        {ticker}_price_history database table as a pandas Dataframe.
+
+        A ticker symbol is passed into the method which is used to construct the
+        db table name of the table containing time-series price history data.
+
+        Args:
+            ticker (str): The ticker symbol string representing the stock whose
+                data is stored in the database Eg: 'AAPL'.
 
         Returns:
             Dataframe: The dataframe representing time-series price data of the
@@ -40,9 +46,12 @@ class StockDataAPI(object):
                 +-----------------+-------+-------+-------+-------+--------+-----------+--------------+
 
         """
+        # Building the database table for the price history data table of a specific ticker:
+        price_history_tbl_name = f"{ticker}_price_history"
+
         # Extracting data from the database via .read_sql_table():
         price_df = pd.read_sql_table(
-            table_name = self._price_history_tbl,
+            table_name = price_history_tbl_name,
             con = self._sqlaengine,
             index_col = "date")
 
