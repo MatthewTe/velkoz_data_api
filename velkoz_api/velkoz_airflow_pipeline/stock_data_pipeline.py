@@ -88,28 +88,22 @@ class VelkozStockPipeline(object):
         list.
 
         This method is meant to be called after the parent object has 
-        been initialized as this method returns a dict containing both
-        the stock price DAG and the PythonOperator. 
+        been initialized as the method declares both the DAG and the
+        python operator as instance variables. 
 
-        Once this method reuturns said dic both objects can then 
-        be exposed to the  global context in order to be detected by 
-        the Airflow Scheduler.
-        
+        It does this so when this method is called, the DAG and Operator 
+        can be declared as variables within the global execution context 
+        to be detected by the airflow scheduler.
 
         Args:
             ticker_lst (list): The list of ticker strings to be passed
                 into the "_perform_stock_data_ingestion" method via
                 the PythonOperator.
-        
-        Returns:
-            dict: A dictionary that contains the stock price data
-                DAG and PythonOperator in the form 
-                {'DAG':stock_price_dag, 'PythonOperator':PythonOperator}
-                that will be used to declaring both objects within the global
-                execution context.
+
+
         """
         # Building the stock price DAG:
-        stock_price_dag = DAG(
+        self.stock_price_dag = DAG(
             dag_id = 'stock_price_data_dag',
             description = "PlaceHolder",
             schedule_interval = '@daily',
@@ -118,19 +112,12 @@ class VelkozStockPipeline(object):
 
         # Creating the PythonOperator that calls the 
         # _stock_data_ingestion method:
-        write_price_data_operator = PythonOperator(
+        self.write_price_data_operator = PythonOperator(
             task_id = "Writing Stock Price Data to Database",
             python_callable = self._perform_stock_data_ingestion,
             op_kwargs = {"ticker_lst":ticker_lst},
             dag = self.stock_price_dag)
-        
-        # Airflow Operator Dict containing DAG and Operator:
-        airflow_dict = {
-            'DAG': stock_price_dag, 
-            'Operator': write_price_data_operator
-            }
 
-        return airflow_dict
     
     # Nested method to be called via the DAGs generated in the 
     # 'schedule_stock_price_data_ingestion' method:
