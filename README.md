@@ -1,2 +1,6 @@
-# velkoz_data_api
-The front-end velkoz data library. It contains all the necessary APIs to extract data from the databases maintained by the velkoz data extraction library. 
+# velkoz Database API
+
+The python package containing all of the APIs that are used to interact with the Velkoz Backend Database:
+
+- The Data API to query structured data from the database.
+- The Pipeline API to allow Airflow pipelines that write data to the database to be built.
