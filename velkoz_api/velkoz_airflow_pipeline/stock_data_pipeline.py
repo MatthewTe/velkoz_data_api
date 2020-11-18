@@ -80,17 +80,21 @@ class VelkozStockPipeline(object):
         method. 
 
         The method creates the DAG associated with writing stock price 
-        data as an instance variable that is configured by the 
-        “default_stock_price_args” dict declared in the initialization of 
-        the object. 
+        data that is configured by the “default_stock_price_args” dict
+        declared in the initialization of the object. 
 
         It then uses said DAG to create the PythonOperator which calls 
         the “_perform_stock_data_ingestion” method with the input ticker 
         list.
 
         This method is meant to be called after the parent object has 
-        been initialized as this method returns a PythonOperator available 
-        to the Airflow Scheduler to be called. 
+        been initialized as this method returns a dict containing both
+        the stock price DAG and the PythonOperator. 
+
+        Once this method reuturns said dic both objects can then 
+        be exposed to the  global context in order to be detected by 
+        the Airflow Scheduler.
+        
 
         Args:
             ticker_lst (list): The list of ticker strings to be passed
@@ -98,13 +102,14 @@ class VelkozStockPipeline(object):
                 the PythonOperator.
         
         Returns:
-            airflow.operators.python_operator.PythonOperator: The 
-                scheduled Airflow Operator that is to be detected 
-                by the Airflow Scheduler.
-
+            dict: A dictionary that contains the stock price data
+                DAG and PythonOperator in the form 
+                {'DAG':stock_price_dag, 'PythonOperator':PythonOperator}
+                that will be used to declaring both objects within the global
+                execution context.
         """
-        # Building the stock price DAG as an instance parameter:
-        self.stock_price_dag = DAG(
+        # Building the stock price DAG:
+        stock_price_dag = DAG(
             dag_id = 'stock_price_data_dag',
             description = "PlaceHolder",
             schedule_interval = '@daily',
@@ -114,12 +119,18 @@ class VelkozStockPipeline(object):
         # Creating the PythonOperator that calls the 
         # _stock_data_ingestion method:
         write_price_data_operator = PythonOperator(
-            task_id = "write_price_data_to_db",
+            task_id = "Writing Stock Price Data to Database",
             python_callable = self._perform_stock_data_ingestion,
             op_kwargs = {"ticker_lst":ticker_lst},
             dag = self.stock_price_dag)
+        
+        # Airflow Operator Dict containing DAG and Operator:
+        airflow_dict = {
+            'DAG': stock_price_dag, 
+            'Operator': write_price_data_operator
+            }
 
-        return write_price_data_operator
+        return airflow_dict
     
     # Nested method to be called via the DAGs generated in the 
     # 'schedule_stock_price_data_ingestion' method:
