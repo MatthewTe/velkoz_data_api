@@ -46,9 +46,6 @@ class VelkozStockPipeline(object):
         default_stock_price_args (dict): The default DAG argument
             dict for configuring the stock price DAG.
         
-        stock_price_dag (DAG): The Airflow object that is used to
-            represent the scheduled process of writing stock price
-            data to the database.
     Todo:
         * Extend the VelkozStockPipeline object for the fund holdings
             data. 
@@ -116,7 +113,7 @@ class VelkozStockPipeline(object):
         # Creating the PythonOperator that calls the 
         # _stock_data_ingestion method:
         write_price_data_operator = PythonOperator(
-            task_id = "write_price_data_to_db",
+            task_id = "Write Price Data to Velkoz Database",
             python_callable = self._perform_stock_data_ingestion,
             op_kwargs = {"ticker_lst":ticker_lst},
             dag = self.stock_price_dag)
