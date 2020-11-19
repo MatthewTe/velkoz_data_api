@@ -75,14 +75,6 @@ class VelkozStockPipeline(object):
             'retry_delay' : timedelta(minutes=1)
             }        
     
-        # Building the stock price DAG:
-        self.stock_price_dag = DAG(
-            dag_id = 'stock_price_data_dag',
-            description = "PlaceHolder",
-            schedule_interval = '@daily',
-            default_args = self.default_stock_price_args)
-        
-
     # Method that schedules writing stock price data to the database:
     def schedule_stock_price_data_ingestion(self, ticker_lst):
         """This method generates the DAG for scheduling stock price 
@@ -102,24 +94,36 @@ class VelkozStockPipeline(object):
         can be declared as variables within the global execution context 
         to be detected by the airflow scheduler.
 
+
         Args:
             ticker_lst (list): The list of ticker strings to be passed
                 into the "_perform_stock_data_ingestion" method via
                 the PythonOperator.
-
+        
+        Returns:
+            airflow.operators.python_operator.PythonOperator: The 
+                scheduled Airflow Operator that is to be detected 
+                by the Airflow Scheduler.
         """
+        # Building the stock price DAG as an instance parameter:
+        self.stock_price_dag = DAG(
+            dag_id = 'stock_price_data_dag',
+            description = "PlaceHolder",
+            schedule_interval = '@daily',
+            default_args = self.default_stock_price_args
+            )
+
         # Creating the PythonOperator that calls the 
         # _stock_data_ingestion method:
         write_price_data_operator = PythonOperator(
-            task_id = "Writing Stock Price Data to Database",
+            task_id = "write_price_data_to_db",
             python_callable = self._perform_stock_data_ingestion,
             op_kwargs = {"ticker_lst":ticker_lst},
-            dag = self.stock_price_dag
-            )
+            dag = self.stock_price_dag)
 
         return write_price_data_operator
+      
 
-    
     # Nested method to be called via the DAGs generated in the 
     # 'schedule_stock_price_data_ingestion' method:
     def _perform_stock_data_ingestion(self, ticker_lst):
