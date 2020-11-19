@@ -45,7 +45,10 @@ class VelkozStockPipeline(object):
         
         default_stock_price_args (dict): The default DAG argument
             dict for configuring the stock price DAG.
-    
+        
+        stock_price_dag (DAG): The Airflow object that is used to
+            represent the scheduled process of writing stock price
+            data to the database.
     Todo:
         * Extend the VelkozStockPipeline object for the fund holdings
             data. 
@@ -71,6 +74,14 @@ class VelkozStockPipeline(object):
             'retries' : 1,
             'retry_delay' : timedelta(minutes=1)
             }        
+    
+        # Building the stock price DAG:
+        self.stock_price_dag = DAG(
+            dag_id = 'stock_price_data_dag',
+            description = "PlaceHolder",
+            schedule_interval = '@daily',
+            default_args = self.default_stock_price_args)
+        
 
     # Method that schedules writing stock price data to the database:
     def schedule_stock_price_data_ingestion(self, ticker_lst):
@@ -79,17 +90,13 @@ class VelkozStockPipeline(object):
         a PythonOperator that executes the “_perform_stock_data_ingestion”
         method. 
 
-        The method creates the DAG associated with writing stock price 
-        data that is configured by the “default_stock_price_args” dict
-        declared in the initialization of the object. 
-
-        It then uses said DAG to create the PythonOperator which calls 
+        It then uses the stock price DAG to create the PythonOperator which calls 
         the “_perform_stock_data_ingestion” method with the input ticker 
         list.
 
         This method is meant to be called after the parent object has 
-        been initialized as the method declares both the DAG and the
-        python operator as instance variables. 
+        been initialized as both the stock price DAG and the
+        python operator are instance variables. 
 
         It does this so when this method is called, the DAG and Operator 
         can be declared as variables within the global execution context 
@@ -100,16 +107,7 @@ class VelkozStockPipeline(object):
                 into the "_perform_stock_data_ingestion" method via
                 the PythonOperator.
 
-
         """
-        # Building the stock price DAG:
-        self.stock_price_dag = DAG(
-            dag_id = 'stock_price_data_dag',
-            description = "PlaceHolder",
-            schedule_interval = '@daily',
-            default_args = self.default_stock_price_args
-            )
-
         # Creating the PythonOperator that calls the 
         # _stock_data_ingestion method:
         self.write_price_data_operator = PythonOperator(
