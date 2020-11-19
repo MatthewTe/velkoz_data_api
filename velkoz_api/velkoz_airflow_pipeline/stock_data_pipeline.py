@@ -86,7 +86,7 @@ class VelkozStockPipeline(object):
     # Method that schedules writing stock price data to the database:
     def schedule_stock_price_data_ingestion(self, ticker_lst):
         """This method generates the DAG for scheduling stock price 
-        time-series data ingestion to the database and returning 
+        time-series data ingestion to the database and returns 
         a PythonOperator that executes the “_perform_stock_data_ingestion”
         method. 
 
@@ -96,7 +96,7 @@ class VelkozStockPipeline(object):
 
         This method is meant to be called after the parent object has 
         been initialized as both the stock price DAG and the
-        python operator are instance variables. 
+        python operator need to be exposed to the global execution conetext. 
 
         It does this so when this method is called, the DAG and Operator 
         can be declared as variables within the global execution context 
@@ -110,11 +110,14 @@ class VelkozStockPipeline(object):
         """
         # Creating the PythonOperator that calls the 
         # _stock_data_ingestion method:
-        self.write_price_data_operator = PythonOperator(
+        write_price_data_operator = PythonOperator(
             task_id = "Writing Stock Price Data to Database",
             python_callable = self._perform_stock_data_ingestion,
             op_kwargs = {"ticker_lst":ticker_lst},
-            dag = self.stock_price_dag)
+            dag = self.stock_price_dag
+            )
+
+        return write_price_data_operator
 
     
     # Nested method to be called via the DAGs generated in the 
