@@ -113,7 +113,7 @@ class VelkozStockPipeline(object):
         # Creating the PythonOperator that calls the 
         # _stock_data_ingestion method:
         write_price_data_operator = PythonOperator(
-            task_id = "Write Price Data to Velkoz Database",
+            task_id = "write_price_data_to_velkoz_database",
             python_callable = self._perform_stock_data_ingestion,
             op_kwargs = {"ticker_lst":ticker_lst},
             dag = self.stock_price_dag)
