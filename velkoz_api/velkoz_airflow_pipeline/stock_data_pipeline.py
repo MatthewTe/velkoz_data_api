@@ -104,7 +104,7 @@ class VelkozStockPipeline(object):
         """
         # Building the stock price DAG as an instance parameter:
         self.stock_price_dag = DAG(
-            dag_id = 'stock_price_data_dag',
+            dag_id = 'Stock Price Data Pipeline',
             description = "PlaceHolder",
             schedule_interval = '@daily',
             default_args = self.default_stock_price_args
