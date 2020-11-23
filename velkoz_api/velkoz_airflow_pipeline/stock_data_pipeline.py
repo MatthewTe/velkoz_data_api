@@ -160,6 +160,9 @@ class VelkozStockPipeline(object):
 
             # Sleeping to prevent timeout from Yahoo Servers:
             time.sleep(20)
+            
+            # Mannual Debug Print:
+            print("Ticker Added:", ticker)
    
         # Adding NASDAQStockPriceResponseObjects into Ingestion Engine Que:
         for price_obj in price_obj_lst:
