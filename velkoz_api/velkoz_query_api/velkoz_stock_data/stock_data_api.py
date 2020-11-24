@@ -56,3 +56,16 @@ class StockDataAPI(object):
             index_col = "Date")
 
         return price_df
+
+
+    def get_stock_database_summary(self):
+        """
+        TODO: Add Documentation.
+        """
+        # Extracting database table from the database via .read_sql_table():
+        stock_summary_df = pd.read_sql_table(
+            table_name = "nasdaq_stock_data_summary_tbl",
+            con = self._sqlaengine,
+            index_col = "ticker")
+
+        return stock_summary_df
