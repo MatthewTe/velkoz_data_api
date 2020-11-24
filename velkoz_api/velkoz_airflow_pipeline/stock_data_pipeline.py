@@ -4,8 +4,13 @@ from airflow.operators.python_operator import PythonOperator
 
 # Importing the velkoz data extraction library packages:
 from velkoz_web_packages.objects_stock_data.stock_data_compiler import compile_ticker_list
+
+# Stock Price Velkoz Packages:
 from velkoz_web_packages.objects_stock_data.objects_stock_price.web_objects_stock_price import NASDAQStockPriceResponseObject
 from velkoz_web_packages.objects_stock_data.objects_stock_price.ingestion_engines_stock_price import StockPriceDataIngestionEngine
+
+# Stock Summary Data Velkoz Packages: 
+from velkoz_web_packages.objects_stock_data.objects_stock_db_summary.ingestion_engines_stock_data_summary import StockDataSummaryIngestionEngine
 
 # Importing 3rd party packages:
 from datetime import datetime
@@ -107,8 +112,7 @@ class VelkozStockPipeline(object):
             dag_id = 'stock_price_data_pipeline',
             description = "PlaceHolder",
             schedule_interval = '@daily',
-            default_args = self.default_stock_price_args
-            )
+            default_args = self.default_stock_price_args)
 
         # Creating the PythonOperator that calls the 
         # _stock_data_ingestion method:
@@ -119,8 +123,28 @@ class VelkozStockPipeline(object):
             dag = self.stock_price_dag)
 
         return write_price_data_operator
-      
+ 
+    # Method that schedules writing stock summary data to the database:
+    def schedule_stock_summary_data_ingestion(self, ticker_lst):
+        """TODO: Add Documentation when written.
+        """
+        # Building the stock data DAG as an instance parameter:
+        self.stock_summary_dag = DAG(
+            dag_id = 'stock_summary_data_pipeline',
+            description = "PlaceHolder",
+            schedule_interval = '@daily',
+            default_args = self.default_stock_price_args)
+        
+        # Creating the PythonOperator that calls the
+        # _stock_summary_data_ingestion method:
+        write_stock_summary_data_operator = PythonOperator(
+            task_id = "write_stock_db_summary_data_to_velkoz_database",
+            python_callable = self._perform_stock_summary_data_ingestion,
+            op_kwargs = {"ticker_lst":ticker_lst},
+            dag = self.stock_summary_dag)
 
+        return write_stock_summary_data_operator
+   
     # Nested method to be called via the DAGs generated in the 
     # 'schedule_stock_price_data_ingestion' method:
     def _perform_stock_data_ingestion(self, ticker_lst):
@@ -170,7 +194,24 @@ class VelkozStockPipeline(object):
 
         # Writing ingested data to the database:
         stock_price_ingestion_engine._write_web_objects() 
-        
+
+    # Nested Method to be called by the DAG generated in the 
+    # 'schedule_stock_summary_data_ingestion' method: 
+    def _perform_stock_summary_data_ingestion(self, ticker_lst):
+        """
+        TODO: Add Documentation.
+        """
+        # Creating an instance of the database ingestion engine:
+        stock_summary_ingestion_engine = StockDataSummaryIngestionEngine(self.db_uri)
+
+        # Iterating through the Ingestion Engine adding all ticker symbols to the que:
+        for ticker in ticker_lst:
+            stock_summary_ingestion_engine._insert_web_obj(ticker)
+    
+        # Writing all the data from the Ingestion Engine que to the database:
+        stock_summary_ingestion_engine._write_web_objects()
+                  
+
 # Basic Testing:
 # test_ticker_lst = ["AAPL", "TSLA"]
 # test_pipeline = VelkozStockPipeline(":memory:", "2020-10-10")
