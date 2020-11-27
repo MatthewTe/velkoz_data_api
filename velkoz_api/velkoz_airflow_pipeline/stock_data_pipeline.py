@@ -126,7 +126,28 @@ class VelkozStockPipeline(object):
  
     # Method that schedules writing stock summary data to the database:
     def schedule_stock_summary_data_ingestion(self, ticker_lst):
-        """TODO: Add Documentation when written.
+        """
+        This method generates the DAG for scheduling data ingestion of the stock 
+        summary data to the database.
+
+        It allows for said scheduling by declaring and returning a PythonOperator 
+        that calls the associated internal scheduling method “_perform_stock_summary_data_ingestion”
+        with the input ticker symbol list as a parameter. 
+        
+        The method also creates the DAG that the returned PythonOperator is associated with 
+        and declares it as an instance variable, allowing it to be exposed to the global execution 
+        context to be detected by the airflow scheduler.
+        
+        Args:
+            ticker_lst (list): The list of ticker strings to be passed
+                into the "_perform_stock_data_ingestion" method via
+                the PythonOperator.
+        
+        Returns:
+            airflow.operators.python_operator.PythonOperator: The 
+                scheduled Airflow Operator that is to be detected 
+                by the Airflow Scheduler.
+        
         """
         # Building the stock data DAG as an instance parameter:
         self.stock_summary_dag = DAG(
@@ -199,7 +220,22 @@ class VelkozStockPipeline(object):
     # 'schedule_stock_summary_data_ingestion' method: 
     def _perform_stock_summary_data_ingestion(self, ticker_lst):
         """
-        TODO: Add Documentation.
+        This is the method that makes use of the Web Data Extraction Library to
+         perform the actual data ingestion of price summary data to the database.
+
+        The method creates an ingestion engine that connects to the database indicated 
+        by the URI. It then iterates over the ingested list of ticker symbol strings, 
+        adding them to the created ingestion engine’s que. The ingestion engine’s que 
+        is then written to the database based on the engine’s internal database writing methods.
+
+        This method is intended to be purely internal and is meant to only be called 
+        via the PythonOperator declared in its parent method: 
+        “schedule_stock_summary_data_ingestion”.
+
+        Args:
+            ticker_lst (list): A list of ticker strings that are used to initalize
+                StockPriceResponseObjects. 
+
         """
         # Creating an instance of the database ingestion engine:
         stock_summary_ingestion_engine = StockDataSummaryIngestionEngine(self.db_uri)
