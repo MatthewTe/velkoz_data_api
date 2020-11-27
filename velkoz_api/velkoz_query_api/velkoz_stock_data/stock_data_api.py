@@ -6,8 +6,20 @@ from sqlalchemy.orm import sessionmaker, Session, scoped_session
 
 
 class StockDataAPI(object):
-    """
-    # TODO: Add Documentation
+    """This is the API that is used to query a database that has 
+    velkoz formatted data written to it.
+
+    The object is initialized which opens a connection to an external database via the 
+    use of the environment variable “DATABASE_URI”. The URI is not passed into the object 
+    as a parameter, it is read from an env variable for security concerned. The database 
+    connection is also created through a SQLAlchemy engine.
+
+    Once the object is initialized, various methods can be called that make database queries 
+    and returns formatted data from the database. The queries that are currently available are:
+
+    - get_price_history --> The Price Time-Series of a particular ticker.
+    - get_stock_database_summary --> Summary data of available stocks contained in the database.
+
     """
     def __init__(self):
 
@@ -15,12 +27,13 @@ class StockDataAPI(object):
         # environment variables:
         try:
             self._db_uri = os.environ["DATABASE_URI"]
-
+            
+             # Creating a connection to the database:
+            self._sqlaengine = create_engine(self._db_uri, pool_pre_ping=True, echo=True)
+        
         except:
             raise ValueError(f"Error With Database URI Environment Variable, Please Check {os.getenv('DATABASE_URI')}")
 
-        # Creating a connection to the database:
-        self._sqlaengine = create_engine(self._db_uri, pool_pre_ping=True, echo=True)
 
     def get_price_history(self, ticker):
         """
@@ -60,7 +73,21 @@ class StockDataAPI(object):
 
     def get_stock_database_summary(self):
         """
-        TODO: Add Documentation.
+        The method that makes use of the pandas.read_sql_table() to extract the 
+        “nasdaq_stock_data_summary_tbl” database table as a pandas Dataframe. 
+        
+        This contains summary data on the stocks available in the velkoz database.
+        
+        Returns:
+            Dataframe: The dataframe representing the summary data on all stock data 
+                available in the database. The DataFrame is in the format of:
+                
+                +----------------+-----------+---------------+----------------+
+                | ticker (index) | price_tbl |  holdings_tbl | last_updated   |
+                +================+===========+===============+================+
+                |      String    |   String  |    String     | DateTime (unix)|   
+                +----------------+-----------+---------------+----------------+
+
         """
         # Extracting database table from the database via .read_sql_table():
         stock_summary_df = pd.read_sql_table(
